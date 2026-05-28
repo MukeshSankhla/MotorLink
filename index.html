@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorLink - M0601/DDSM115 Hub Motor Controller</title>
+    <link rel="icon" type="image/svg+xml" href="images/Motor.svg">
+    <!-- Google Fonts: Inter (main body) & JetBrains Mono (terminal log) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-[#f8fafc] text-[#0f172a] font-sans min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Top Bar Header -->
+    <header
+        class="border-b border-slate-200 bg-white/95 backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+        <div class="flex items-center gap-3">
+            <img src="images/Motor.svg" alt="MotorLink" class="w-12 h-12 object-contain">
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h1 class="text-xl font-bold tracking-tight text-[#0f172a]">MotorLink</h1>
+                </div>
+                <p class="text-xs text-[#64748b] font-medium">Hub Motor RS485 Interface</p>
+            </div>
+        </div>
+
+        <!-- Connection and Configuration Controls -->
+        <div class="flex items-center flex-wrap gap-4">
+            <!-- Browser Support Alert Banner -->
+            <div id="browser-warning"
+                class="hidden flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500"></i>
+                <span>Web Serial API not supported. Please use Google Chrome or MS Edge.</span>
+            </div>
+
+            <!-- Product & Docs Links -->
+            <a href="https://www.dfrobot.com/product-3076.html?marketing=698d958c78dd3" target="_blank"
+                class="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1.5 bg-blue-50/80 px-4 py-2 rounded-xl border border-blue-200/60 shadow-sm transition-all text-sm font-bold active:scale-95 animate-fade-in">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i> Product
+            </a>
+            <a href="https://community.dfrobot.com/makelog-318452.html" target="_blank"
+                class="text-emerald-600 hover:text-emerald-800 hover:underline flex items-center gap-1.5 bg-emerald-50/80 px-4 py-2 rounded-xl border border-emerald-200/60 shadow-sm transition-all text-sm font-bold active:scale-95 animate-fade-in">
+                <i data-lucide="file-text" class="w-4 h-4"></i> Docs
+            </a>
+
+            <!-- Protocol Profile Selection -->
+            <div
+                class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100/80 rounded-xl px-3.5 py-2 transition-colors border border-slate-100 shadow-xs">
+                <label for="profile-selector"
+                    class="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider whitespace-nowrap cursor-pointer">Protocol</label>
+                <select id="profile-selector"
+                    class="bg-transparent text-xs font-bold text-slate-700 focus:outline-none cursor-pointer pr-1">
+                    <option value="fit1042" selected>DFRobot FIT1042 (M0601)</option>
+                    <option value="ddsm115">Waveshare DDSM115</option>
+                </select>
+            </div>
+
+            <!-- Active Motor ID Selection -->
+            <div
+                class="flex items-center gap-2 bg-slate-50 hover:bg-slate-100/80 rounded-xl px-3.5 py-2 transition-colors border border-slate-100 shadow-xs">
+                <label for="motor-id-selector"
+                    class="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider whitespace-nowrap cursor-pointer">Motor
+                    ID</label>
+                <select id="motor-id-selector"
+                    class="bg-transparent text-xs font-bold text-slate-700 focus:outline-none cursor-pointer w-24">
+                    <!-- Option items auto-populated -->
+                </select>
+            </div>
+
+            <!-- Connection Trigger Button -->
+            <div class="flex items-center">
+                <button id="btn-connect"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2 rounded-xl active:scale-95 transition-all flex items-center gap-2 shadow-sm">
+                    <i data-lucide="power" class="w-4 h-4"></i>
+                    <span>Connect</span>
+                </button>
+            </div>
+
+            <!-- Status Badge Indicator -->
+            <div class="flex items-center gap-2 bg-white border border-slate-200 px-3.5 py-2 rounded-xl shadow-sm">
+                <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                <span id="status-text" class="text-xs font-bold text-slate-500">Disconnected</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Dashboard Grid -->
+    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1600px] mx-auto w-full items-start">
+
+        <!-- Left Panel Column: Control Tabs & Log Terminal (6 cols) -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            <!-- Card 1: Control Tab Panel -->
+            <div class="card-paper control-card p-5 flex flex-col shadow-sm">
+
+                <!-- Navigation Tab Headers -->
+                <div class="flex border-b border-slate-200 mb-5 overflow-x-auto pb-1 gap-2 custom-scrollbar">
+                    <button id="tab-vel" class="tab-btn active" data-target="panel-velocity">
+                        <i data-lucide="gauge" class="w-4 h-4"></i>
+                        <span>Velocity</span>
+                    </button>
+                    <button id="tab-curr" class="tab-btn" data-target="panel-current">
+                        <i data-lucide="activity" class="w-4 h-4"></i>
+                        <span>Current</span>
+                    </button>
+                    <button id="tab-pos" class="tab-btn" data-target="panel-position">
+                        <i data-lucide="compass" class="w-4 h-4"></i>
+                        <span>Position</span>
+                    </button>
+                    <button id="tab-id" class="tab-btn" data-target="panel-id">
+                        <i data-lucide="fingerprint" class="w-4 h-4"></i>
+                        <span>ID Manager</span>
+                    </button>
+                    <button id="tab-raw" class="tab-btn" data-target="panel-raw">
+                        <i data-lucide="binary" class="w-4 h-4"></i>
+                        <span>Raw Hex</span>
+                    </button>
+                </div>
+
+                <!-- Active Control Forms -->
+                <div class="flex-1 flex flex-col">
+
+                    <!-- 1. Velocity Loop Panel -->
+                    <div id="panel-velocity" class="tab-panel flex flex-col gap-5 active">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-base text-slate-800">Velocity Loop Control</h3>
+                            <button id="btn-vel-switch" class="btn-mode-switch" disabled>
+                                <span>Switch to Velocity Loop</span>
+                            </button>
+                        </div>
+
+                        <div id="velocity-controls-sub" class="flex flex-col gap-5 flex-1">
+                            <!-- Acceleration Parameter -->
+                            <div
+                                class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
+                                <label for="vel-accel-input" class="text-sm font-semibold text-slate-600">Acceleration
+                                    Parameter</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="vel-accel-input"
+                                        class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-right text-base font-bold text-slate-800 w-20 focus:outline-none focus:border-blue-500"
+                                        value="1" min="0" max="255">
+                                    <span class="text-xs text-slate-400 font-bold uppercase">SCALE</span>
+                                </div>
+                            </div>
+
+                            <!-- Target Speed -->
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-semibold text-slate-600">Target Speed</span>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" id="vel-rpm-input"
+                                            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-right text-base font-bold text-blue-600 w-20 focus:outline-none focus:border-blue-500"
+                                            value="0" min="-330" max="330">
+                                        <span class="text-xs text-slate-400 font-bold uppercase">RPM</span>
+                                    </div>
+                                </div>
+
+                                <input type="range" id="vel-rpm-slider" class="range-slider w-full accent-blue-600"
+                                    min="-330" max="330" value="0">
+
+                                <div class="flex justify-between text-[10px] text-slate-400 font-bold px-1">
+                                    <span>-330 RPM (CCW)</span>
+                                    <span>0 RPM</span>
+                                    <span>+330 RPM (CW)</span>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons - Side-by-Side Unified Presets & Controls -->
+                            <div class="flex flex-col gap-2 mt-auto pt-4 border-t border-slate-200">
+                                <span class="text-[10px] text-slate-450 font-bold uppercase tracking-wider">Speed &
+                                    Brake Actions</span>
+                                <div class="grid grid-cols-7 gap-1.5">
+                                    <button id="btn-vel-rev"
+                                        class="btn-secondary text-[11px] py-2.5 font-bold rounded-lg shadow-sm"
+                                        title="Preset -100 RPM">-100</button>
+                                    <button id="btn-vel-rev-50"
+                                        class="btn-secondary text-[11px] py-2.5 font-bold rounded-lg shadow-sm"
+                                        title="Preset -50 RPM">-50</button>
+                                    <button id="btn-vel-stop"
+                                        class="btn-danger text-[11px] py-2.5 font-bold rounded-lg shadow-sm"
+                                        title="Stop motor (0 RPM)">STOP</button>
+                                    <button id="btn-vel-start"
+                                        class="btn-primary text-[11px] py-2.5 font-bold rounded-lg shadow-sm bg-blue-600 text-white hover:bg-blue-700"
+                                        title="Start motor">START</button>
+                                    <button id="btn-vel-brake"
+                                        class="btn-warning text-[11px] py-2.5 font-bold rounded-lg shadow-sm"
+                                        title="Brake motor (5x)">BRAKE</button>
+                                    <button id="btn-vel-fwd-50"
+                                        class="btn-secondary text-[11px] py-2.5 font-bold rounded-lg shadow-sm"
+                                        title="Preset +50 RPM">+50</button>
+                                    <button id="btn-vel-fwd"
+                                        class="btn-secondary text-[11px] py-2.5 font-bold rounded-lg shadow-sm"
+                                        title="Preset +100 RPM">+100</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Current Loop Panel -->
+                    <div id="panel-current" class="tab-panel flex flex-col gap-5">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-base text-slate-800">Current Loop Control</h3>
+                            <button id="btn-curr-switch" class="btn-mode-switch" disabled>
+                                <span>Switch to Current Loop</span>
+                            </button>
+                        </div>
+
+                        <div id="current-controls-sub" class="flex flex-col gap-5 flex-1">
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <span class="text-sm font-semibold text-slate-600">Target Current</span>
+                                        <div class="text-xs text-slate-400 font-semibold">Equiv: <span
+                                                id="curr-amps-display" class="font-bold text-emerald-600">0.00</span> A
+                                            (Max
+                                            ±8.0A)</div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" id="curr-val-input"
+                                            class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-right text-base font-bold text-emerald-600 w-24 focus:outline-none focus:border-blue-500"
+                                            value="0" min="-32767" max="32767">
+                                        <span class="text-xs text-slate-400 font-bold uppercase">RAW</span>
+                                    </div>
+                                </div>
+
+                                <input type="range" id="curr-val-slider" class="range-slider w-full accent-emerald-600"
+                                    min="-32767" max="32767" value="0">
+
+                                <div class="flex justify-between text-[10px] text-slate-400 font-bold px-1">
+                                    <span>-32767 (~ -8.0A)</span>
+                                    <span>0 (0.0A)</span>
+                                    <span>+32767 (~ +8.0A)</span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <span class="text-xs font-semibold text-slate-400">Current Presets (Raw Values):</span>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <button class="btn-preset-curr btn-secondary text-xs py-2" data-value="-10000">-10k
+                                        (~-2.4A)</button>
+                                    <button class="btn-preset-curr btn-secondary text-xs py-2" data-value="-5000">-5k
+                                        (~-1.2A)</button>
+                                    <button class="btn-preset-curr btn-secondary text-xs py-2" data-value="-2000">-2k
+                                        (~-0.5A)</button>
+                                    <button class="btn-preset-curr btn-secondary text-xs py-2" data-value="0">0
+                                        (0.0A)</button>
+                                    <button class="btn-preset-curr btn-secondary text-xs py-2" data-value="2000">+2k
+                                        (~+0.5A)</button>
+                                    <button class="btn-preset-curr btn-secondary text-xs py-2" data-value="5000">+5k
+                                        (~+1.2A)</button>
+                                    <button class="btn-preset-curr btn-secondary text-xs py-2" data-value="10000">+10k
+                                        (~+2.4A)</button>
+                                    <button id="btn-curr-stop"
+                                        class="btn-danger text-xs py-2 font-bold rounded-lg shadow-sm flex items-center justify-center gap-1">
+                                        <i data-lucide="square" class="w-3.5 h-3.5"></i> STOP
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 3. Position Loop Panel -->
+                    <div id="panel-position" class="tab-panel flex flex-col gap-5">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-base text-slate-800">Position Loop Control</h3>
+                            <button id="btn-pos-switch" class="btn-mode-switch" disabled>
+                                <span>Switch to Position Loop</span>
+                            </button>
+                        </div>
+
+                        <div id="position-controls-sub" class="flex flex-col gap-5 flex-1">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                                <!-- Circular Knob SVG Dial Container -->
+                                <div
+                                    class="flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-xl p-2.5 h-[150px]">
+                                    <span
+                                        class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Angle
+                                        Dial</span>
+                                    <div class="relative w-24 h-24 flex items-center justify-center cursor-pointer select-none"
+                                        id="pos-dial-container">
+                                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                            <!-- Outer dial boundary -->
+                                            <circle cx="50" cy="50" r="42" stroke="#e2e8f0" stroke-width="6"
+                                                fill="transparent" />
+                                            <!-- Active glow path -->
+                                            <circle cx="50" cy="50" r="42" stroke="#4f46e5" stroke-width="6"
+                                                fill="transparent" stroke-dasharray="263.89" stroke-dashoffset="263.89"
+                                                id="pos-dial-fill" stroke-linecap="round" />
+                                            <!-- Glowing Pointer handle circle instead of line -->
+                                            <circle cx="92" cy="50" r="5.5" fill="#4f46e5" stroke="#ffffff"
+                                                stroke-width="1.5" id="pos-dial-pointer" class="shadow-sm" />
+                                        </svg>
+                                        <div class="absolute text-center">
+                                            <div class="text-sm font-bold text-indigo-600" id="pos-dial-degrees">0°
+                                            </div>
+                                            <div class="text-[8px] text-slate-400 font-bold" id="pos-dial-raw">Raw: 0
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Numeric Inputs & Sliders -->
+                                <div class="flex flex-col gap-3 h-[150px] justify-between">
+                                    <div
+                                        class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex flex-col justify-center flex-1">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-[10px] font-bold text-slate-400 uppercase">Position
+                                                    Target</span>
+                                                <span class="text-[10px] font-extrabold text-indigo-500">(<span
+                                                        id="pos-deg-display">0.0</span>°)</span>
+                                            </div>
+                                            <div class="flex items-center gap-1.5">
+                                                <input type="number" id="pos-val-input"
+                                                    class="bg-white border border-slate-200 rounded-md px-1.5 py-0.5 text-right text-xs font-bold text-indigo-600 w-16 focus:outline-none focus:border-blue-500"
+                                                    value="0" min="0" max="32767">
+                                                <span class="text-[9px] text-slate-455 font-bold">RAW</span>
+                                            </div>
+                                        </div>
+                                        <input type="range" id="pos-val-slider"
+                                            class="range-slider w-full accent-indigo-600" min="0" max="32767" value="0">
+                                    </div>
+
+                                    <div class="flex flex-1 items-stretch">
+                                        <button id="btn-pos-stop"
+                                            class="btn-danger w-full py-3.5 font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer">
+                                            <i data-lucide="square" class="w-4 h-4"></i> STOP POLLING
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Position Presets -->
+                            <div class="flex flex-col gap-1.5">
+                                <span class="text-xs font-semibold text-slate-505">Angle Presets:</span>
+                                <div class="grid grid-cols-5 gap-1.5">
+                                    <button class="btn-preset-pos btn-secondary text-[11px] py-1.5"
+                                        data-value="0">0°</button>
+                                    <button class="btn-preset-pos btn-secondary text-[11px] py-1.5"
+                                        data-value="8191">90°</button>
+                                    <button class="btn-preset-pos btn-secondary text-[11px] py-1.5"
+                                        data-value="16383">180°</button>
+                                    <button class="btn-preset-pos btn-secondary text-[11px] py-1.5"
+                                        data-value="24575">270°</button>
+                                    <button class="btn-preset-pos btn-secondary text-[11px] py-1.5"
+                                        data-value="32767">360°</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. ID Manager Panel -->
+                    <div id="panel-id" class="tab-panel flex flex-col gap-5">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-base text-slate-800">Motor ID Management</h3>
+                        </div>
+
+                        <div class="flex flex-col gap-4">
+                            <div
+                                class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3.5 flex gap-2 text-xs leading-relaxed shadow-sm">
+                                <i data-lucide="alert-triangle"
+                                    class="w-4.5 h-4.5 text-amber-600 flex-shrink-0 mt-0.5 animate-bounce"></i>
+                                <div>
+                                    <strong class="font-bold block">Safety Instruction:</strong>
+                                    Verify **ONLY ONE** motor is connected during scan/write routines.
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <button id="btn-id-broadcast-scan"
+                                    class="btn-primary py-2.5 text-xs flex justify-center items-center gap-1.5"
+                                    disabled>
+                                    <i data-lucide="radio" class="w-3.5 h-3.5"></i> Broadcast Scan (C8)
+                                </button>
+                                <button id="btn-id-full-scan"
+                                    class="btn-secondary py-2.5 text-xs flex justify-center items-center gap-1.5"
+                                    disabled>
+                                    <i data-lucide="scan" class="w-3.5 h-3.5"></i> Full Poll Scan (01-FE)
+                                </button>
+                            </div>
+
+                            <!-- Scan Progress bar -->
+                            <div id="scan-progress-container"
+                                class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span id="scan-progress-status"
+                                        class="text-xs font-semibold text-slate-600">Scanning ID 0x01...</span>
+                                    <span id="scan-progress-percent" class="text-xs font-bold text-blue-600">0%</span>
+                                </div>
+                                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                    <div id="scan-progress-bar" class="bg-blue-500 h-full w-0 transition-all"></div>
+                                </div>
+                            </div>
+
+                            <!-- Discovered list -->
+                            <div
+                                class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2 min-h-[90px]">
+                                <span class="text-xs font-semibold text-slate-550 flex items-center gap-1">
+                                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-slate-400"></i> Discovered
+                                    Motors
+                                </span>
+                                <ul id="scan-results-list" class="text-xs flex flex-wrap gap-2 text-slate-700">
+                                    <li class="text-slate-450 italic">No scan run yet</li>
+                                </ul>
+                            </div>
+
+                            <div class="border-t border-slate-200 mt-auto pt-4 flex flex-col gap-3">
+                                <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wide">Assign New Motor ID
+                                </h4>
+                                <div class="flex gap-3">
+                                    <div class="flex-1 flex flex-col gap-1">
+                                        <label for="new-id-input" class="text-[10px] text-slate-400 font-bold">Target ID
+                                            (1-254)</label>
+                                        <input type="number" id="new-id-input"
+                                            class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-bold text-slate-800 focus:outline-none w-full"
+                                            value="1" min="1" max="254">
+                                    </div>
+                                    <div class="flex-1 flex items-end">
+                                        <button id="btn-id-assign"
+                                            class="btn-primary bg-indigo-600 hover:bg-indigo-700 border-none w-full py-2 text-xs flex justify-center items-center gap-1.5"
+                                            disabled>
+                                            <i data-lucide="edit" class="w-3.5 h-3.5"></i> Set New ID (5x)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Raw Frame Panel -->
+                    <div id="panel-raw" class="tab-panel flex flex-col gap-5">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-base text-slate-800">Raw Frame Command Editor</h3>
+                        </div>
+
+                        <div class="flex flex-col gap-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label for="raw-frame-input" class="text-xs font-semibold text-slate-555">Payload Bytes
+                                    (9 Hex Bytes: ID, CMD, D0-D6)</label>
+                                <input type="text" id="raw-frame-input"
+                                    class="bg-white font-mono tracking-widest text-base border border-slate-200 rounded-xl px-4 py-2.5 text-blue-600 focus:outline-none focus:border-blue-500 w-full"
+                                    placeholder="01 64 00 64 00 00 00 00 00" value="01 64 00 64 00 00 00 00 00">
+                                <span id="raw-frame-error"
+                                    class="text-[11px] text-rose-600 hidden font-semibold">Invalid input. Enter exactly
+                                    9 hex bytes.</span>
+                            </div>
+
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2">
+                                <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Output Packet
+                                    Frame (10-byte Frame)</span>
+                                <div class="flex flex-col gap-1 bg-white p-2.5 rounded-lg border border-slate-200">
+                                    <div id="raw-frame-calculated"
+                                        class="font-mono text-sm tracking-wider text-slate-700">01 64 00 64 00 00 00 00
+                                        00 <span class="text-emerald-600 font-bold underline">4F</span></div>
+                                    <div class="text-[10px] text-slate-400 font-bold">Auto computed CRC-8/Maxim byte
+                                        appended at byte 9</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex flex-col gap-3">
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="raw-frame-repeat"
+                                        class="w-4 h-4 rounded border-slate-200 bg-white text-blue-600 accent-blue-500">
+                                    <label for="raw-frame-repeat"
+                                        class="text-xs font-semibold text-slate-600 select-none">Send Repeatedly (Poll
+                                        Loop)</label>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3" id="raw-frame-repeat-options">
+                                    <div class="flex flex-col gap-1">
+                                        <label for="raw-frame-count" class="text-[10px] text-slate-400 font-bold">Count
+                                            (0 = Infinite)</label>
+                                        <input type="number" id="raw-frame-count"
+                                            class="bg-white border border-slate-200 rounded-lg px-3 py-1 text-xs font-bold text-slate-700 focus:outline-none"
+                                            value="0" min="0">
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label for="raw-frame-interval"
+                                            class="text-[10px] text-slate-400 font-bold">Interval (ms)</label>
+                                        <input type="number" id="raw-frame-interval"
+                                            class="bg-white border border-slate-200 rounded-lg px-3 py-1 text-xs font-bold text-slate-700 focus:outline-none"
+                                            value="20" min="5">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button id="btn-raw-send" class="btn-primary py-3 font-semibold text-sm rounded-xl mt-auto"
+                                disabled>
+                                <i data-lucide="send" class="w-4 h-4 inline mr-2"></i> SEND RAW FRAME
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Card 2: Terminal Communication Log -->
+            <div class="card-paper log-card p-5 flex flex-col gap-3 shadow-sm">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="terminal" class="w-4 h-4 text-slate-500"></i>
+                        <h3 class="font-bold text-sm text-slate-700">Communication Packet Log</h3>
+                        <span id="log-count"
+                            class="bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">0
+                            entries</span>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button id="btn-clear-log"
+                            class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1 rounded text-xs font-bold transition-all shadow-sm">
+                            Clear
+                        </button>
+                        <button id="btn-export-log"
+                            class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 px-3 py-1 rounded text-xs font-bold transition-all shadow-sm">
+                            Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Terminal Output Area -->
+                <div id="log-container"
+                    class="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3 font-mono text-xs overflow-y-auto flex flex-col gap-1.5 custom-scrollbar shadow-inner">
+                    <div class="text-slate-400 italic">[System] Select COM port and Connect to begin.</div>
+                </div>
+
+                <!-- Polling collapsing & Auto-scroll toggles -->
+                <div class="flex items-center gap-4 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="chk-collapse-polling"
+                            class="w-3.5 h-3.5 rounded border-slate-250 bg-white text-blue-600 accent-blue-500" checked>
+                        <label for="chk-collapse-polling"
+                            class="text-[11px] font-semibold text-slate-555 select-none cursor-pointer">Collapse status
+                            poll</label>
+                    </div>
+                    <div class="flex items-center gap-2 border-l border-slate-200 pl-4">
+                        <input type="checkbox" id="chk-auto-scroll"
+                            class="w-3.5 h-3.5 rounded border-slate-250 bg-white text-blue-600 accent-blue-500" checked>
+                        <label for="chk-auto-scroll"
+                            class="text-[11px] font-semibold text-slate-555 select-none cursor-pointer">Auto-scroll
+                            terminal</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel Column: Telemetry & Monitoring Dashboard (6 cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+
+            <!-- Motor Status Visual & Digital Metrics Row (Aligned side-by-side) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+
+                <!-- Card 1: Motor Graphic Representation Card -->
+                <div
+                    class="card-paper motor-status-card flex flex-col justify-center items-center gap-3 text-center shadow-sm">
+
+                    <div id="motor-visual-container" class="motor-visual-container status-ring-disconnected">
+                        <img id="motor-visual" class="motor-visual-img motor-disconnected" src="images/Motor.png"
+                            alt="Motor Representation">
+                    </div>
+
+                    <div class="flex flex-col gap-1 items-center">
+                        <div class="flex gap-2 items-center justify-center flex-wrap">
+                            <div id="status-badge"
+                                class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                                Offline
+                            </div>
+                            <div id="mode-badge"
+                                class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 hidden">
+                                Open Loop
+                            </div>
+                        </div>
+                        <span id="motor-motion-text"
+                            class="text-[9px] text-slate-400 font-bold uppercase tracking-wide mt-0.5">Stationary</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: Digital Telemetry Readings Grid -->
+                <div class="card-paper telemetry-card p-4 flex flex-col justify-between shadow-sm">
+                    <span class="text-[10px] text-slate-550 font-bold uppercase tracking-wider mb-2">Live Telemetry
+                        Metrics</span>
+
+                    <div class="grid grid-cols-2 gap-3 flex-1">
+                        <!-- Speed Metric with Sparkline -->
+                        <div
+                            class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col justify-between overflow-hidden shadow-xs hover:border-slate-300 transition-all">
+                            <div class="flex justify-between items-start">
+                                <span
+                                    class="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider">Speed</span>
+                                <div class="flex items-baseline gap-0.5">
+                                    <span id="telemetry-speed"
+                                        class="text-base font-extrabold tracking-tight text-blue-600">0</span>
+                                    <span class="text-[7px] text-slate-400 font-bold uppercase">RPM</span>
+                                </div>
+                            </div>
+                            <!-- Mini Sparkline Graph -->
+                            <div class="h-[120px] w-full mt-2 relative">
+                                <svg class="w-full h-full" viewBox="0 0 200 120" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="speed-spark-grad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#2563eb" stop-opacity="0.25" />
+                                            <stop offset="100%" stop-color="#2563eb" stop-opacity="0" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path id="sparkline-speed-fill" d="M 0,120 L 200,120 Z"
+                                        fill="url(#speed-spark-grad)" />
+                                    <path id="sparkline-speed-path" d="M 0,120 L 200,120" fill="none" stroke="#2563eb"
+                                        stroke-width="2.5" stroke-linecap="round" />
+                                    <!-- Center 0 RPM reference line -->
+                                    <line x1="0" y1="60" x2="200" y2="60" stroke="#cbd5e1" stroke-width="1"
+                                        stroke-dasharray="2,2" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Current Metric with Sparkline -->
+                        <div
+                            class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col justify-between overflow-hidden shadow-xs hover:border-slate-300 transition-all">
+                            <div class="flex justify-between items-start">
+                                <span
+                                    class="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider">Current</span>
+                                <div class="flex items-baseline gap-0.5">
+                                    <span id="telemetry-current"
+                                        class="text-base font-extrabold tracking-tight text-emerald-600">0.00</span>
+                                    <span class="text-[7px] text-slate-400 font-bold uppercase">A</span>
+                                </div>
+                            </div>
+                            <!-- Mini Sparkline Graph -->
+                            <div class="h-[120px] w-full mt-2 relative">
+                                <svg class="w-full h-full" viewBox="0 0 200 120" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="current-spark-grad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#059669" stop-opacity="0.25" />
+                                            <stop offset="100%" stop-color="#059669" stop-opacity="0" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path id="sparkline-current-fill" d="M 0,120 L 200,120 Z"
+                                        fill="url(#current-spark-grad)" />
+                                    <path id="sparkline-current-path" d="M 0,120 L 200,120" fill="none" stroke="#059669"
+                                        stroke-width="2.5" stroke-linecap="round" />
+                                    <!-- Center 0A reference line -->
+                                    <line x1="0" y1="60" x2="200" y2="60" stroke="#cbd5e1" stroke-width="1"
+                                        stroke-dasharray="2,2" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Position Metric with Mini Gauge -->
+                        <div
+                            class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col justify-between overflow-hidden shadow-xs hover:border-slate-300 transition-all">
+                            <div class="flex justify-between items-start">
+                                <span
+                                    class="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider">Position</span>
+                                <div class="flex items-baseline gap-0.5">
+                                    <span id="telemetry-position"
+                                        class="text-base font-extrabold tracking-tight text-indigo-600">0.0</span>
+                                    <span class="text-[7px] text-slate-400 font-bold">°</span>
+                                </div>
+                            </div>
+                            <!-- Mini Circular Gauge -->
+                            <div class="flex-grow flex items-center justify-center h-[130px] mt-2 relative">
+                                <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="40" stroke="#e2e8f0" stroke-width="6"
+                                        fill="transparent" />
+                                    <circle cx="50" cy="50" r="40" stroke="#4f46e5" stroke-width="6" fill="transparent"
+                                        stroke-dasharray="251.3" stroke-dashoffset="251.3" id="mini-pos-gauge-fill"
+                                        stroke-linecap="round" />
+                                    <circle cx="90" cy="50" r="4.5" fill="#4f46e5" stroke="#ffffff" stroke-width="1.5"
+                                        id="mini-pos-gauge-dot" />
+                                </svg>
+                            </div>
+                            <div class="flex justify-between items-center w-full mt-2 pt-1 border-t border-slate-100">
+                                <span class="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Raw
+                                    Position:</span>
+                                <span id="telemetry-position-raw"
+                                    class="text-[8px] text-slate-500 font-mono font-bold">(0)</span>
+                            </div>
+                        </div>
+
+                        <!-- Temperature / Errors with Semi-Circular Gauge -->
+                        <div
+                            class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col justify-between overflow-hidden shadow-xs hover:border-slate-300 transition-all">
+                            <div class="flex justify-between items-start">
+                                <span class="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider">Temp /
+                                    Errors</span>
+                                <div class="flex items-baseline gap-0.5">
+                                    <span id="telemetry-temp" class="text-base font-extrabold text-amber-600">0</span>
+                                    <span class="text-[7px] text-slate-400 font-bold">°C</span>
+                                </div>
+                            </div>
+                            <!-- Mini Semi-Circular Gauge -->
+                            <div class="flex-grow flex items-center justify-center h-[130px] mt-2 relative">
+                                <svg class="w-32 h-auto" viewBox="0 0 100 60">
+                                    <path d="M 10 50 A 40 40 0 0 1 90 50" stroke="#e2e8f0" stroke-width="6" fill="none"
+                                        stroke-linecap="round" />
+                                    <path d="M 10 50 A 40 40 0 0 1 90 50" stroke="#d97706" stroke-width="6" fill="none"
+                                        stroke-linecap="round" stroke-dasharray="125.66" stroke-dashoffset="125.66"
+                                        id="mini-temp-gauge-fill" />
+                                    <circle cx="10" cy="50" r="4.5" fill="#d97706" stroke="#ffffff" stroke-width="1.5"
+                                        id="mini-temp-gauge-dot" />
+                                </svg>
+                            </div>
+                            <div class="flex justify-between items-center w-full mt-2 pt-1 border-t border-slate-100">
+                                <span class="text-[7px] text-slate-400 font-extrabold uppercase tracking-wider">Error
+                                    Code:</span>
+                                <div id="telemetry-error-badge"
+                                    class="bg-emerald-100 border border-emerald-250 text-emerald-700 font-mono text-[8px] px-1.5 py-0.5 rounded font-bold">
+                                    OK: <span id="telemetry-error">00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Live Chart Panels Card -->
+            <div class="card-paper chart-card p-5 flex flex-col shadow-sm relative">
+
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-4.5 h-4.5 text-blue-600"></i>
+                        <h3 class="font-bold text-sm text-slate-700">Real-time Performance Telemetry Graph (Merged)</h3>
+                    </div>
+                    <!-- Unified Combined Legend Pill -->
+                    <div
+                        class="flex gap-4 items-center bg-slate-100/80 px-3.5 py-1.5 rounded-xl border border-slate-200 shadow-inner">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 bg-blue-600 rounded-full"></span>
+                            <span class="text-[9px] font-extrabold text-blue-600 uppercase tracking-wider">Speed
+                                (RPM)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3">
+                            <span class="w-2.5 h-2.5 bg-emerald-600 rounded-full"></span>
+                            <span class="text-[9px] font-extrabold text-emerald-600 uppercase tracking-wider">Current
+                                (A)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Chart Container (Fixed Height 460px to prevent dynamic scaling distortions) -->
+                <div class="h-[460px] relative mt-2 border border-slate-100 rounded-lg bg-[#ffffff] overflow-hidden">
+
+                    <!-- Fixed Non-scaling HTML Axis Labels -->
+                    <!-- Speed labels (Left, Blue) -->
+                    <div id="speed-chart-labels"
+                        class="absolute left-2 top-0 bottom-0 pointer-events-none select-none z-10 text-[9px] text-blue-600 font-extrabold">
+                        <span class="absolute" style="top: 9.1%; transform: translateY(-50%);">+350 RPM</span>
+                        <span class="absolute" style="top: 29.5%; transform: translateY(-50%);">+175 RPM</span>
+                        <span class="absolute" style="top: 50.0%; transform: translateY(-50%);">0 RPM</span>
+                        <span class="absolute" style="top: 70.5%; transform: translateY(-50%);">-175 RPM</span>
+                        <span class="absolute" style="top: 90.9%; transform: translateY(-50%);">-350 RPM</span>
+                    </div>
+
+                    <!-- Current labels (Right, Emerald) -->
+                    <div id="current-chart-labels"
+                        class="absolute right-2 top-0 bottom-0 pointer-events-none select-none z-10 text-[9px] text-emerald-600 font-extrabold text-right">
+                        <span class="absolute right-0" style="top: 9.1%; transform: translateY(-50%);">+8.0 A</span>
+                        <span class="absolute right-0" style="top: 29.5%; transform: translateY(-50%);">+4.0 A</span>
+                        <span class="absolute right-0" style="top: 50.0%; transform: translateY(-50%);">0.0 A</span>
+                        <span class="absolute right-0" style="top: 70.5%; transform: translateY(-50%);">-4.0 A</span>
+                        <span class="absolute right-0" style="top: 90.9%; transform: translateY(-50%);">-8.0 A</span>
+                    </div>
+
+                    <!-- SVG Combined Chart -->
+                    <svg id="combined-chart-svg" class="w-full h-full" viewBox="0 0 600 220" preserveAspectRatio="none">
+                        <!-- Chart Gridlines -->
+                        <line x1="60" y1="20" x2="540" y2="20" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="2" />
+                        <line x1="60" y1="65" x2="540" y2="65" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="2" />
+                        <line x1="60" y1="110" x2="540" y2="110" stroke="#cbd5e1" stroke-width="1.5" />
+                        <line x1="60" y1="155" x2="540" y2="155" stroke="#f1f5f9" stroke-width="1"
+                            stroke-dasharray="2" />
+                        <line x1="60" y1="200" x2="540" y2="200" stroke="#cbd5e1" stroke-width="1.5" />
+
+                        <!-- Plot Paths (Semi-transparent stroke-opacity="0.75" for beautiful collisions) -->
+                        <path id="chart-speed-path" d="" fill="none" stroke="#2563eb" stroke-opacity="0.75"
+                            stroke-width="2.5" stroke-linecap="round" />
+                        <path id="chart-current-path" d="" fill="none" stroke="#059669" stroke-opacity="0.75"
+                            stroke-width="2.5" stroke-linecap="round" />
+                    </svg>
+                </div>
+
+                <div
+                    class="flex justify-between items-center text-[9px] text-slate-400 font-bold px-4 mt-2 border-t border-slate-100 pt-1.5">
+                    <span>60s ago</span>
+                    <span>30s ago</span>
+                    <span>Live combined telemetry graph (200ms query interval)</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer
+        class="w-full bg-slate-50/80 backdrop-blur-xl border-t border-slate-200/60 py-2 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center text-xs font-medium text-slate-500 shadow-sm mb-20 sm:mb-0 relative z-10">
+        <div class="mb-4 sm:mb-0 flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+            <span>&copy; 2026 <a href="https://www.makerbrains.com/" target="_blank"
+                    class="text-blue-600 hover:text-blue-700 transition-colors font-bold">Maker Brains</a>. All rights
+                reserved.</span>
+            <span class="hidden sm:inline text-slate-300">|</span>
+            <span>contact: <a href="mailto:mukeshdiy1@gmail.com"
+                    class="text-slate-600 hover:text-slate-900 transition-colors">mukeshdiy1@gmail.com</a></span>
+        </div>
+        <div class="flex items-center gap-1">
+            <span>Made with <span class="text-red-500 text-lg inline-block align-middle">&hearts;</span> by</span>
+            <a href="https://www.linkedin.com/in/mukeshsankhla/" target="_blank"
+                class="text-blue-600 hover:text-blue-700 transition-colors font-bold">Mukesh Sankhla</a>
+        </div>
+    </footer>
+
+    <!-- Fixed Overlay Emergency Stop Button -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button id="btn-estop"
+            class="w-16 h-16 rounded-full bg-red-650 hover:bg-red-650 text-white shadow-lg shadow-red-600/35 border-4 border-red-100 active:scale-90 transition-all flex flex-col items-center justify-center cursor-pointer group"
+            style="background-color: #dc2626;" title="Emergency Stop [Spacebar]">
+            <i data-lucide="octagon" class="w-6 h-6 text-white group-hover:scale-110 transition-transform"></i>
+            <span class="text-[9px] font-extrabold uppercase mt-1 tracking-wider">STOP</span>
+        </button>
+    </div>
+
+    <!-- Beautiful Fullscreen Glassmorphism E-Stop Overlay -->
+    <div id="estop-overlay"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md hidden transition-all duration-300">
+        <div
+            class="bg-gradient-to-br from-red-600 via-rose-700 to-emerald-600 p-8 rounded-3xl shadow-2xl border border-white/20 text-center max-w-md w-full mx-4 transform scale-95 transition-transform duration-300 flex flex-col items-center gap-6">
+            <div
+                class="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center border border-white/20 animate-pulse">
+                <i data-lucide="octagon" class="w-12 h-12 text-white"></i>
+            </div>
+            <div>
+                <h2 class="text-3xl font-extrabold text-white tracking-tight">MOTOR STOPPED</h2>
+                <p class="text-white/80 text-sm mt-2 font-medium">Emergency stop has been triggered successfully. The
+                    motor has been electronically braked.</p>
+            </div>
+            <button id="btn-estop-ack"
+                class="bg-white hover:bg-slate-100 text-red-700 font-bold px-8 py-3.5 rounded-2xl active:scale-95 transition-all shadow-lg flex items-center gap-2 cursor-pointer w-full justify-center text-sm">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Acknowledge & Reset
+            </button>
+        </div>
+    </div>
+
+    <!-- Application Script Logic -->
+    <script src="app.js"></script>
+</body>
+
+</html>

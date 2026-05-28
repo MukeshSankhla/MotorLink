@@ -1,0 +1,30 @@
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+thumbs.db
+
+# Dependencies
+node_modules/
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Logs and databases
+*.log
+*.csv
+
+# Non-essential items we moved
+python_tools_and_docs/
