@@ -5,6 +5,8 @@
 
 ## MotorLink Web App
 
+![Demo](images/Demo.gif)
+
 MotorLink is a free, open browser-based control application designed to simplify interfacing with the M0601 Motor. It handles all RS485 protocol complexity automatically using the Web Serial API, requiring no software installation or backend.
 
 **Key Features:**
@@ -13,7 +15,7 @@ MotorLink is a free, open browser-based control application designed to simplify
 - **Live Telemetry & Graphs:** Monitor speed, current, position, and temperature in real time.
 - **Advanced Tools:** Integrated ID manager, raw hex editor, and communication packet log.
 
-![Demo](images/Demo.gif)
+![Demo](images/MotorLink.gif)
 
 ## Supplies
 
@@ -120,6 +122,8 @@ The M0601's combination of direct drive, RS485 multi-drop, and three control mod
 
 ## 5. Pinout & Wiring
 
+![Connection](images/Connection.png)
+
 The motor has two cable connectors:
 
 ### Signal Cable (4-pin JST connector)
@@ -179,8 +183,6 @@ PC / Microcontroller
 ---
 
 ## 7. Interfacing with RainbowLink (TEL0185)
-
-![Connection](images/Connection.png)
 
 The **DFRobot RainbowLink** ([TEL0185](https://www.dfrobot.com/product-2879.html)) is a 4-channel USB-to-multi-protocol converter supporting RS485, RS232, and TTL on a single USB connection. It is the recommended PC interface for the M0601.
 
@@ -1248,7 +1250,7 @@ Working with raw RS485 hex frames manually is error-prone and slow. To solve thi
 
 **🔗 Live App: [https://mukeshsankhla.github.io/MotorLink/](https://mukeshsankhla.github.io/MotorLink/)**
 
-![Demo](images/Demo.gif)
+![Demo](images/MotorLink.gif)
 ![IM1](images/IM1.png)
 ![IM2](images/IM2.png)
 
