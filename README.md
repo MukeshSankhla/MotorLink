@@ -1348,38 +1348,21 @@ Combined speed and current telemetry plotted on a shared time axis, updating at 
 
 ---
 
-## Appendix: Quick Reference Card
+## 15. License and Policy of Use
 
-### Minimum Steps to Spin the Motor
+This project and the MotorLink application are licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC-BY-NC-SA 4.0)**. 
 
-```
-1. Wire:  White→A,  Orange→B,  Black→GND,  Brown→GND
-2. Power: 18V DC to Red/Black power connector
-3. Set velocity mode:  01 A0 00 00 00 00 00 00 00 02  (send ×5)
-4. Spin at 100 RPM:    01 64 00 64 00 00 00 00 00 4F  (poll at 50Hz)
-5. Stop:               01 64 00 00 00 00 00 00 00 50  (send ×5)
-6. Brake:              01 64 00 00 00 00 00 FF 00 D1  (send ×5)
-```
+Under this license, you are free to:
+- **Share** — copy and redistribute the material in any medium or format.
+- **Adapt** — remix, transform, and build upon the material.
 
-### Conversion Formulas
-
-```python
-# Velocity (INT16 signed)
-frame_val = target_rpm                            # -330 to +330
-high, low = (frame_val >> 8) & 0xFF, frame_val & 0xFF
-
-# Current (INT16 signed)
-current_amps = raw_int16 * 8.0 / 32767           # decode
-raw_int16    = int(current_amps / 8.0 * 32767)   # encode
-
-# Position (UINT16)
-degrees   = raw_uint16 * 360.0 / 32767           # decode
-raw_uint16 = int(degrees / 360.0 * 32767)        # encode
-```
+Under the following terms:
+- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made.
+- **NonCommercial** — You may not use the material for commercial purposes.
+- **ShareAlike** — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
 
 ---
 
-*Documentation prepared for the M0601 Direct-Drive Hub Motor (DFRobot FIT1042) and MotorLink web application.*  
 *Compatible with Waveshare DDSM115.*  
 *Protocol reference: [https://wiki.dfrobot.com/fit1042/docs/23322](https://wiki.dfrobot.com/fit1042/docs/23322)*  
 *Made with ❤ by Mukesh Sankhla*
