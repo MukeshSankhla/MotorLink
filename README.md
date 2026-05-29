@@ -3,6 +3,18 @@
 > **Integrated FOC Servo | RS485 | Velocity · Current · Position Loop**  
 > Manufactured by DFRobot · FIT1042 Series
 
+## MotorLink Web App Quick Intro
+
+MotorLink is a free, open browser-based control application designed to simplify interfacing with the M0601 Motor. It handles all RS485 protocol complexity automatically using the Web Serial API, requiring no software installation or backend.
+
+**Key Features:**
+- **Digital Twin Visualization:** Real-time on-screen sync of the motor's movement.
+- **Full Motor Control:** Intuitive sliders and presets for Velocity, Current, and Position loop modes.
+- **Live Telemetry & Graphs:** Monitor speed, current, position, and temperature in real time.
+- **Advanced Tools:** Integrated ID manager, raw hex editor, and communication packet log.
+
+![Demo](images/Demo.gif)
+
 ![S1](images/S1.JPG)
 
 ## Supplies
