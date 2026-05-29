@@ -1,9 +1,9 @@
 # DFRobot M0601 Hub Motor For AGV Interfacing RS485
 
-> **Integrated FOC Servo | RS485 | Velocity · Current · Position Loop**  
-> Manufactured by DFRobot · FIT1042 Series
+> **Complete Guide to Interfacing the DFRobot M0601 Hub Motor (RS485)**  
+> In this comprehensive tutorial, you will learn how to interface the **DFRobot M0601 Motor** (Direct-Drive Hub Motor for AGV) using the RS485 communication protocol. We will guide you step-by-step through testing the motor with raw Hex commands, automating movements with Python scripts, and finally controlling it via **MotorLink**—an intuitive, browser-based digital twin application.
 
-## MotorLink Web App Quick Intro
+## MotorLink Web App
 
 MotorLink is a free, open browser-based control application designed to simplify interfacing with the M0601 Motor. It handles all RS485 protocol complexity automatically using the Web Serial API, requiring no software installation or backend.
 
@@ -15,13 +15,12 @@ MotorLink is a free, open browser-based control application designed to simplify
 
 ![Demo](images/Demo.gif)
 
-![S1](images/S1.JPG)
-
 ## Supplies
 
-- 1x M0601
-- 1x Rainbowlink: https://www.dfrobot.com/product-3076.html?marketing=698d958c78dd3https://www.dfrobot.com/product-2879.html
+- 1x [M0601](https://www.dfrobot.com/product-3076.html)
+- 1x [Rainbowlink](https://www.dfrobot.com/product-2879.html)
 
+![S1](images/S1.JPG)
 ![S2](images/S2.JPG)
 
 ---
