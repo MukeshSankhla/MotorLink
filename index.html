@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MotorLink - M0601/DDSM115 Hub Motor Controller</title>
+    <title>MotorLink</title>
     <link rel="icon" type="image/svg+xml" href="images/Motor.svg">
     <!-- Google Fonts: Inter (main body) & JetBrains Mono (terminal log) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,11 +36,11 @@
     <!-- Top Bar Header -->
     <header
         class="border-b border-slate-200 bg-white/95 backdrop-blur-md sticky top-0 z-40 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1">
             <img src="images/Motor.svg" alt="MotorLink" class="w-12 h-12 object-contain">
             <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <h1 class="text-xl font-bold tracking-tight text-[#0f172a]">MotorLink</h1>
+                <div class="flex items-center flex-wrap">
+                    <h1 class="text-xl font-bold tracking-tight text-[#2563eb]">MotorLink</h1>
                 </div>
                 <p class="text-xs text-[#64748b] font-medium">Hub Motor RS485 Interface</p>
             </div>
@@ -571,11 +571,22 @@
 
                 <!-- Card 1: Motor Graphic Representation Card -->
                 <div
-                    class="card-paper motor-status-card flex flex-col justify-center items-center gap-3 text-center shadow-sm">
+                    class="card-paper motor-status-card flex flex-col justify-center items-center gap-3 text-center shadow-sm relative">
 
-                    <div id="motor-visual-container" class="motor-visual-container status-ring-disconnected">
+                    <div id="mode-badge"
+                        class="absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 hidden">
+                        Open Loop
+                    </div>
+
+                    <div id="motor-visual-container" class="motor-visual-container status-ring-disconnected relative">
                         <img id="motor-visual" class="motor-visual-img motor-disconnected" src="images/Motor.png"
                             alt="Motor Representation">
+                        <!-- Info Icon Button -->
+                        <button id="btn-info-popup"
+                            class="absolute top-2 right-2 bg-white/80 hover:bg-white text-slate-600 rounded-full p-1.5 shadow-sm border border-slate-200 transition-all z-10 cursor-pointer"
+                            title="Connection Guide">
+                            <i data-lucide="info" class="w-4 h-4"></i>
+                        </button>
                     </div>
 
                     <div class="flex flex-col gap-1 items-center">
@@ -583,10 +594,6 @@
                             <div id="status-badge"
                                 class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
                                 Offline
-                            </div>
-                            <div id="mode-badge"
-                                class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 hidden">
-                                Open Loop
                             </div>
                         </div>
                         <span id="motor-motion-text"
@@ -855,6 +862,127 @@
                 class="bg-white hover:bg-slate-100 text-red-700 font-bold px-8 py-3.5 rounded-2xl active:scale-95 transition-all shadow-lg flex items-center gap-2 cursor-pointer w-full justify-center text-sm">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i> Acknowledge & Reset
             </button>
+        </div>
+    </div>
+
+    <!-- Info Popup Overlay -->
+    <div id="info-popup-overlay"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md hidden transition-all duration-300 p-4">
+        <div
+            class="bg-white p-6 rounded-3xl shadow-2xl border border-slate-200 text-left max-w-2xl w-full mx-auto transform scale-95 transition-transform duration-300 flex flex-col gap-5 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button id="btn-close-info"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors z-10">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            <h2 class="text-2xl font-bold text-slate-800 text-center">Hub Motor RS485 Connection</h2>
+
+            <div class="text-sm text-slate-600 space-y-2">
+                <p>This hub motor uses RS485 communication for control and feedback. It has two separate connectors:</p>
+            </div>
+
+            <div class="flex flex-col gap-4 md:flex-row md:items-start">
+                <div class="flex-1 space-y-4">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm mb-1">1. Power Connector (2 Pin)</h3>
+                        <p class="text-xs text-slate-500 mb-2">Used to supply power to the motor controller inside the
+                            hub. Connect a stable 18V DC power supply to these wires.</p>
+                        <table class="w-full text-xs text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200">
+                                    <th class="py-1.5 px-2 font-semibold">Wire Color</th>
+                                    <th class="py-1.5 px-2 font-semibold">Function</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-1.5 px-2 text-red-600 font-medium flex items-center gap-1"><span
+                                            class="w-2 h-2 rounded-full bg-red-600"></span> Red</td>
+                                    <td class="py-1.5 px-2">+18V Power Input</td>
+                                </tr>
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-1.5 px-2 font-medium flex items-center gap-1"><span
+                                            class="w-2 h-2 rounded-full bg-black"></span> Black</td>
+                                    <td class="py-1.5 px-2">GND</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm mb-1">2. RS485 Communication Connector (4 Pin)</h3>
+                        <p class="text-xs text-slate-500 mb-2">Used for serial communication with ESP32, USB-RS485
+                            converter, PLC, or industrial controller.</p>
+                        <table class="w-full text-xs text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200">
+                                    <th class="py-1.5 px-2 font-semibold">Wire Color</th>
+                                    <th class="py-1.5 px-2 font-semibold">Function</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-1.5 px-2 font-medium flex items-center gap-1"><span
+                                            class="w-2 h-2 rounded-full bg-black"></span> Black</td>
+                                    <td class="py-1.5 px-2">GND</td>
+                                </tr>
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-1.5 px-2 font-medium flex items-center gap-1"><span
+                                            class="w-2 h-2 rounded-full bg-white border border-slate-300"></span> White
+                                    </td>
+                                    <td class="py-1.5 px-2">RS485 A (+)</td>
+                                </tr>
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-1.5 px-2 text-orange-500 font-medium flex items-center gap-1"><span
+                                            class="w-2 h-2 rounded-full bg-orange-500"></span> Orange</td>
+                                    <td class="py-1.5 px-2">RS485 B (-)</td>
+                                </tr>
+                                <tr class="border-b border-slate-100">
+                                    <td class="py-1.5 px-2 text-amber-700 font-medium flex items-center gap-1"><span
+                                            class="w-2 h-2 rounded-full bg-amber-700"></span> Brown</td>
+                                    <td class="py-1.5 px-2">Reserved / NC</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex-1 flex flex-col justify-center gap-4">
+                    <img id="connection-img" src="images/Connection.png" alt="Connection Image" title="Click to expand"
+                        class="w-full h-auto rounded-xl border border-slate-200 shadow-sm cursor-zoom-in hover:shadow-md transition-shadow">
+                    <div class="flex flex-row gap-3 justify-center w-full">
+                        <a href="https://www.dfrobot.com/product-3076.html?marketing=698d958c78dd3" target="_blank"
+                            class="flex-1 text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center gap-1.5 bg-blue-50/80 px-2 py-2 rounded-xl border border-blue-200/60 shadow-sm transition-all text-xs font-bold active:scale-95 whitespace-nowrap">
+                            <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i> Buy Motor
+                        </a>
+                        <a href="https://community.dfrobot.com/makelog-318452.html" target="_blank"
+                            class="flex-1 text-emerald-600 hover:text-emerald-800 hover:underline flex items-center justify-center gap-1.5 bg-emerald-50/80 px-2 py-2 rounded-xl border border-emerald-200/60 shadow-sm transition-all text-xs font-bold active:scale-95 whitespace-nowrap">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Documentation
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3 flex gap-3 text-sm leading-relaxed shadow-sm w-full">
+                <i data-lucide="info" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <strong class="font-bold block mb-1">Troubleshooting:</strong>
+                    If not working swap the A and B wires.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Lightbox Overlay -->
+    <div id="lightbox-overlay"
+        class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm hidden transition-all duration-300 p-4">
+        <div class="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center">
+            <button id="btn-close-lightbox"
+                class="absolute -top-12 right-0 text-white/70 hover:text-white transition-colors cursor-pointer">
+                <i data-lucide="x" class="w-8 h-8"></i>
+            </button>
+            <img id="lightbox-img" src="images/Connection.png" alt="Expanded Connection Image"
+                class="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl transform scale-95 transition-transform duration-300">
         </div>
     </div>
 

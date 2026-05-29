@@ -126,6 +126,12 @@ function setupUIReferences() {
         // Estop
         'btn-estop', 'estop-overlay', 'btn-estop-ack',
 
+        // Info Popup
+        'btn-info-popup', 'info-popup-overlay', 'btn-close-info',
+
+        // Lightbox
+        'connection-img', 'lightbox-overlay', 'btn-close-lightbox', 'lightbox-img',
+
         // Motor visual status representation
         'motor-visual-container', 'motor-visual', 'motor-motion-text'
     ];
@@ -375,6 +381,55 @@ function setupEventListeners() {
 
     // ── Emergency Stop Button ──
     UI['btn-estop'].addEventListener('click', () => triggerEmergencyStop());
+
+    // ── Info Popup ──
+    if (UI['btn-info-popup'] && UI['info-popup-overlay'] && UI['btn-close-info']) {
+        UI['btn-info-popup'].addEventListener('click', () => {
+            UI['info-popup-overlay'].classList.remove('hidden');
+            setTimeout(() => {
+                UI['info-popup-overlay'].children[0].classList.remove('scale-95');
+                UI['info-popup-overlay'].children[0].classList.add('scale-100');
+            }, 10);
+        });
+        
+        const closeInfoPopup = () => {
+            UI['info-popup-overlay'].children[0].classList.remove('scale-100');
+            UI['info-popup-overlay'].children[0].classList.add('scale-95');
+            setTimeout(() => {
+                UI['info-popup-overlay'].classList.add('hidden');
+            }, 300);
+        };
+
+        UI['btn-close-info'].addEventListener('click', closeInfoPopup);
+        UI['info-popup-overlay'].addEventListener('click', (e) => {
+            if (e.target === UI['info-popup-overlay']) closeInfoPopup();
+        });
+    }
+
+    // ── Image Lightbox ──
+    if (UI['connection-img'] && UI['lightbox-overlay'] && UI['btn-close-lightbox']) {
+        UI['connection-img'].addEventListener('click', () => {
+            UI['lightbox-overlay'].classList.remove('hidden');
+            setTimeout(() => {
+                UI['lightbox-img'].classList.remove('scale-95');
+                UI['lightbox-img'].classList.add('scale-100');
+            }, 10);
+        });
+
+        const closeLightbox = () => {
+            UI['lightbox-img'].classList.remove('scale-100');
+            UI['lightbox-img'].classList.add('scale-95');
+            setTimeout(() => {
+                UI['lightbox-overlay'].classList.add('hidden');
+            }, 300);
+        };
+
+        UI['btn-close-lightbox'].addEventListener('click', closeLightbox);
+        UI['lightbox-overlay'].addEventListener('click', (e) => {
+            // Close if clicking outside the image
+            if (e.target === UI['lightbox-overlay']) closeLightbox();
+        });
+    }
 
     // Keyboard Shortcuts (operable by one hand)
     window.addEventListener('keydown', (e) => {
@@ -774,19 +829,19 @@ function updateModeBadge(modeName) {
     UI['mode-badge'].classList.remove('hidden');
     if (modeName === 'velocity') {
         modeText = 'Velocity Loop';
-        UI['mode-badge'].className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200';
+        UI['mode-badge'].className = 'absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200';
     } else if (modeName === 'current') {
         modeText = 'AC (Current)';
-        UI['mode-badge'].className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200';
+        UI['mode-badge'].className = 'absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200';
     } else if (modeName === 'position') {
         modeText = 'Position Loop';
-        UI['mode-badge'].className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200';
+        UI['mode-badge'].className = 'absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200';
     } else if (modeName === 'raw') {
         modeText = 'Raw Hex';
-        UI['mode-badge'].className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200';
+        UI['mode-badge'].className = 'absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200';
     } else {
         modeText = 'Open Loop';
-        UI['mode-badge'].className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200';
+        UI['mode-badge'].className = 'absolute top-3 right-3 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200';
     }
     UI['mode-badge'].textContent = modeText;
 }
