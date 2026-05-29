@@ -1,7 +1,16 @@
-# M0601 Direct-Drive Hub Motor — Technical Documentation & MotorLink
+# DFRobot M0601 Hub Motor For AGV Interfacing RS485
 
 > **Integrated FOC Servo | RS485 | Velocity · Current · Position Loop**  
 > Manufactured by DFRobot · FIT1042 Series
+
+![S1](images/S1.JPG)
+
+## Supplies
+
+- 1x M0601
+- 1x Rainbowlink: https://www.dfrobot.com/product-3076.html?marketing=698d958c78dd3https://www.dfrobot.com/product-2879.html
+
+![S2](images/S2.JPG)
 
 ---
 
@@ -29,6 +38,8 @@
 ---
 
 ## 1. Motor Overview
+
+![MO1](images/MO1.webp)
 
 The **M0601** is a high-performance direct-drive hub motor from DFRobot's FIT1042 series. Based on an integrated FOC (Field-Oriented Control) servo architecture, it combines an outer-rotor brushless motor, encoder, and servo driver into a single compact unit — eliminating the need for external reducers and delivering smooth, low-noise torque directly to the wheel.
 
@@ -157,6 +168,8 @@ PC / Microcontroller
 ---
 
 ## 7. Interfacing with RainbowLink (TEL0185)
+
+![Connection](images/Connection.png)
 
 The **DFRobot RainbowLink** ([TEL0185](https://www.dfrobot.com/product-2879.html)) is a 4-channel USB-to-multi-protocol converter supporting RS485, RS232, and TTL on a single USB connection. It is the recommended PC interface for the M0601.
 
@@ -1223,6 +1236,10 @@ timestamp,motor_id,mode,speed_rpm,current_a,temp_c,position_deg,error_code,error
 Working with raw RS485 hex frames manually is error-prone and slow. To solve this, **MotorLink** was built as a free, open browser-based application that handles all the protocol complexity automatically.
 
 **🔗 Live App: [https://mukeshsankhla.github.io/MotorLink/](https://mukeshsankhla.github.io/MotorLink/)**
+
+![Demo](images/Demo.gif)
+![IM1](images/IM1.png)
+![IM2](images/IM2.png)
 
 ### Compatible Motors
 
