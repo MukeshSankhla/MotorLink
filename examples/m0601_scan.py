@@ -58,13 +58,13 @@ def stage1_broadcast(ser):
 
     # If response is identical to our query, it's just the RS485 echo — not a motor reply.
     if bytes(resp) == FRAME_ID_QUERY:
-        print("  (Echo only — motor did not respond separately)")
+        print("  (Echo only - motor did not respond separately)")
         return None
 
     # Motor reply starts with its own ID byte (0x01–0xFE)
     for byte in resp:
         if 0x01 <= byte <= 0xFE:
-            print(f"  ✓ Motor found via broadcast — ID: 0x{byte:02X} ({byte})")
+            print(f"  [+] Motor found via broadcast - ID: 0x{byte:02X} ({byte})")
             return byte
 
     return None
@@ -75,14 +75,14 @@ def stage2_full_poll(ser):
     Poll each ID from 0x01 to 0xFE individually.
     Returns a list of all responding IDs.
     """
-    print("\n[Stage 2] Full ID poll (0x01 → 0xFE)...")
-    print(f"  Estimated time: {254 * TIMEOUT:.0f}s — please wait.\n")
+    print("\n[Stage 2] Full ID poll (0x01 -> 0xFE)...")
+    print(f"  Estimated time: {254 * TIMEOUT:.0f}s - please wait.\n")
     found = []
 
     for motor_id in range(0x01, 0xFF):
         # Print progress bar
         pct   = motor_id / 254
-        bar   = "█" * int(30 * pct) + "░" * (30 - int(30 * pct))
+        bar   = "#" * int(30 * pct) + "-" * (30 - int(30 * pct))
         print(f"\r  [{bar}] 0x{motor_id:02X} ({motor_id}/254)", end="", flush=True)
 
         ser.reset_input_buffer()
@@ -93,9 +93,9 @@ def stage2_full_poll(ser):
         # A valid reply is 10 bytes starting with the motor's own ID
         if resp and len(resp) >= 3 and resp[0] == motor_id:
             found.append(motor_id)
-            print(f"\n  ✓ Motor at ID 0x{motor_id:02X} ({motor_id}) replied!")
+            print(f"\n  [+] Motor at ID 0x{motor_id:02X} ({motor_id}) replied!")
 
-    print(f"\r  [{'█' * 30}] Done!                                  ")
+    print(f"\r  [{'#' * 30}] Done!                                  ")
     return found
 
 
@@ -104,7 +104,7 @@ def main():
     print("  M0601 Motor Scanner")
     print(f"  Port: {COM_PORT}  |  Baud: {BAUD_RATE}")
     print("=" * 52)
-    print("\n  ⚠  For Stage 1, ensure only ONE motor is on the bus.")
+    print("\n  [!] For Stage 1, ensure only ONE motor is on the bus.")
     print("  Press Enter to start scan, Ctrl+C to cancel...")
     input()
 
@@ -114,9 +114,9 @@ def main():
             bytesize=8, parity='N', stopbits=1,
             timeout=TIMEOUT
         )
-        print(f"[✓] Opened {COM_PORT}")
+        print(f"[+] Opened {COM_PORT}")
     except serial.SerialException as e:
-        print(f"[✗] Cannot open port: {e}")
+        print(f"[-] Cannot open port: {e}")
         sys.exit(1)
 
     try:
@@ -132,15 +132,15 @@ def main():
         if all_ids:
             print(f"\n  {len(all_ids)} motor(s) found:")
             for mid in all_ids:
-                print(f"    • ID 0x{mid:02X}  (decimal {mid})")
+                print(f"    - ID 0x{mid:02X}  (decimal {mid})")
             if len(all_ids) == 1:
-                print(f"\n  → In other scripts, set:  MOTOR_ID = 0x{all_ids[0]:02X}")
+                print(f"\n  -> In other scripts, set:  MOTOR_ID = 0x{all_ids[0]:02X}")
         else:
-            print("\n  ✗ No motors detected.")
+            print("\n  [-] No motors detected.")
             print("  Checklist:")
             print("    1. Is the 18V power adapter ON?")
             print("    2. Is the Brown wire connected to GND?")
-            print("    3. Try swapping Orange ↔ White (A/B polarity)")
+            print("    3. Try swapping Orange <-> White (A/B polarity)")
             print(f"    4. Try increasing TIMEOUT (currently {TIMEOUT}s)")
         print("=" * 52)
 
@@ -148,7 +148,7 @@ def main():
         print("\n[!] Scan cancelled.")
     finally:
         ser.close()
-        print("[✓] Port closed.")
+        print("[+] Port closed.")
 
 
 if __name__ == "__main__":
